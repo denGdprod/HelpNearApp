@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "392832706241",
+    "project_id": "helpnear-app",
+    "storage_bucket": "helpnear-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:392832706241:android:146e478d175b5b412f1640",
+        "android_client_info": {
+          "package_name": "com.example.helpnear_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBNICeyjl6iHN1POQ6L8dxYipEsZOyMS3Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
