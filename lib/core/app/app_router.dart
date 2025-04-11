@@ -1,6 +1,4 @@
 import 'package:go_router/go_router.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:helpnear_app/core/app/auth_wrapper.dart';
 import 'package:helpnear_app/features/map/home_screen.dart';
 import 'package:helpnear_app/features/profile/account_screen.dart';
 import 'package:helpnear_app/features/auth/login_screen.dart';
@@ -8,17 +6,14 @@ import 'package:helpnear_app/features/auth/signup_screen.dart';
 import 'package:helpnear_app/features/auth/reset_password_screen.dart';
 import 'package:helpnear_app/features/auth/verify_email_screen.dart';
 import 'package:helpnear_app/features/errors/ErrorScreen.dart';
+import 'package:helpnear_app/features/auth/unauthenticated_screen.dart';
+import 'package:helpnear_app/core/utils/auth_state_notifier.dart';
+import 'package:provider/provider.dart';
 
 final appRouter = GoRouter(
   errorBuilder: (context, state) => ErrorScreen(error: state.error),
   routes: [
-    // Главный маршрут с AuthWrapper
-    GoRoute(
-      path: '/',
-      builder: (context, state) => const AuthWrapper(),
-    ),
-    
-    // Дочерние маршруты
+    // маршруты
     GoRoute(
       path: '/home',
       name: 'home',
@@ -48,14 +43,18 @@ final appRouter = GoRouter(
       path: '/verify_email',
       name: 'verify_email',
       builder: (context, state) => const VerifyEmailScreen(),
+    ),
+    GoRoute(
+      path: '/unauthenticated',
+      name: 'unauthenticated',
+      builder: (context, state) => const UnauthenticatedScreen(),
     ),   
   ],
-
   redirect: (context, state) {
-    final user = FirebaseAuth.instance.currentUser;
-    final isAuth = user != null;
-    final isEmailVerified = user?.emailVerified ?? false;
-    final currentLocation = state.uri.path; 
+    final auth = Provider.of<AuthStateNotifier>(context, listen: false);
+    final isAuth = auth.isAuthenticated;
+    final isEmailVerified = auth.isEmailVerified;
+    final currentLocation = state.uri.toString();
 
     final authRoutes = [
       '/login',
@@ -66,7 +65,7 @@ final appRouter = GoRouter(
 
     // Если пользователь не авторизован и не на auth-маршруте
     if (!isAuth && !authRoutes.contains(currentLocation)) {
-      return '/login';
+      return '/unauthenticated';
     }
 
     // Если email не подтвержден и не на странице подтверждения
