@@ -154,7 +154,7 @@ class _SignUpScreen extends State<SignUpScreen> {
               ),
               const SizedBox(height: 30),
               TextButton(
-                onPressed: () => context.pop(),
+              onPressed: () => context.goNamed('login'),
                 child: const Text(
                   'Войти',
                   style: TextStyle(

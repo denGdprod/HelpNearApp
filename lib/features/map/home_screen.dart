@@ -34,7 +34,6 @@ class HomeScreen extends StatelessWidget {
           child: (user == null)
               ? const Text("Контент для НЕ зарегистрированных в системе")
               : const Text('Контент для ЗАРЕГИСТРИРОВАННЫХ в системе'),
-          //child: Text('Контент для НЕ зарегистрированных в системе'),
         ),
       ),
     );

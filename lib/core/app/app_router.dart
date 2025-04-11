@@ -55,7 +55,7 @@ final appRouter = GoRouter(
     final user = FirebaseAuth.instance.currentUser;
     final isAuth = user != null;
     final isEmailVerified = user?.emailVerified ?? false;
-    final currentLocation = state.uri.path; // Используем path вместо toString()
+    final currentLocation = state.uri.path; 
 
     final authRoutes = [
       '/login',
