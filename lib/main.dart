@@ -1,5 +1,12 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:helpnear_app/core/app/auth_wrapper.dart';
+import 'package:helpnear_app/features/map/home_screen.dart';
+import 'package:helpnear_app/features/profile/account_screen.dart';
+import 'package:helpnear_app/features/auth/login_screan.dart';
+import 'package:helpnear_app/features/auth/signup_screen.dart';
+import 'package:helpnear_app/features/auth/reset_password_screen.dart';
+import 'package:helpnear_app/features/auth/verify_email_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized(); //запуск firebase
@@ -11,73 +18,25 @@ class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
 @override
+  @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false, // Убираем debug-баннер
-      title: 'My Flutter App', // Название приложения
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true, // Включить Material 3 дизайн
+        pageTransitionsTheme: const PageTransitionsTheme(builders: {
+          TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+        }),
       ),
-      darkTheme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.deepPurple,
-          brightness: Brightness.dark,
-        ),
-        useMaterial3: true,
-      ),
-      themeMode: ThemeMode.system, // Следовать системным настройкам темы
-      home: const Scaffold( // Временный экран-заглушка
-        body: Center(
-          child: Text('Главный экран приложения'),
-        ),
-      ),
-    );
-  }
-}
-
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      routes: {
+        '/': (context) => const AuthWrapper(),
+        '/home': (context) => const HomeScreen(),
+        '/account': (context) => const AccountScreen(),
+        '/login': (context) => const LoginScreen(),
+        '/signup': (context) => const SignUpScreen(),
+        '/reset_password': (context) => const ResetPasswordScreen(),
+        '/verify_email': (context) => const VerifyEmailScreen(),
+      },
+      initialRoute: '/',
     );
   }
 }
