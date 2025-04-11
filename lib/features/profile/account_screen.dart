@@ -28,7 +28,11 @@ class _AccountScreenState extends State<AccountScreen> {
       appBar: AppBar(
         leading: IconButton(
           onPressed: () {
-            GoRouter.of(context).pop();
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              GoRouter.of(context).goNamed('home');
+            }
           },
           icon: const Icon(
             Icons.arrow_back_ios, // add custom icons also
