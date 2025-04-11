@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:helpnear_app/features/auth/login_screan.dart';
-import 'package:helpnear_app/features/profile/account_screen.dart';
+import 'package:go_router/go_router.dart';
+
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
@@ -17,16 +17,9 @@ class HomeScreen extends StatelessWidget {
           IconButton(
             onPressed: () {
               if ((user == null)) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const LoginScreen()),
-                );
+                context.go('/login');
               } else {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const AccountScreen()),
-                );
+                context.go('/account');
               }
             },
             icon: Icon(

@@ -2,6 +2,7 @@ import 'package:email_validator/email_validator.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:helpnear_app/core/utils/snack_bar.dart';
+import 'package:go_router/go_router.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
   const ResetPasswordScreen({super.key});
@@ -17,49 +18,48 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   @override
   void dispose() {
     emailTextInputController.dispose();
-
     super.dispose();
   }
 
-  Future<void> resetPassword() async {
-    final navigator = Navigator.of(context);
-    final scaffoldMassager = ScaffoldMessenger.of(context);
+Future<void> resetPassword() async {
+  final isValid = formKey.currentState!.validate();
+  if (!isValid) return;
 
-    final isValid = formKey.currentState!.validate();
-    if (!isValid) return;
+  final navigator = GoRouter.of(context);
 
-    try {
-      await FirebaseAuth.instance
-          .sendPasswordResetEmail(email: emailTextInputController.text.trim());
-    } on FirebaseAuthException catch (e) {
-      print(e.code);
-
-      if (e.code == 'user-not-found') {
-        SnackBarService.showSnackBar(
-          context,
-          'Такой email незарегистрирован!',
-          true,
-        );
-        return;
-      } else {
-        SnackBarService.showSnackBar(
-          context,
-          'Неизвестная ошибка! Попробуйте еще раз или обратитесь в поддержку.',
-          true,
-        );
-        return;
-      }
-    }
-
-    const snackBar = SnackBar(
-      content: Text('Сброс пароля осуществен. Проверьте почту'),
-      backgroundColor: Colors.green,
+  try {
+    await FirebaseAuth.instance.sendPasswordResetEmail(
+      email: emailTextInputController.text.trim(),
     );
+  } on FirebaseAuthException catch (e) {
+    print(e.code);
 
-    scaffoldMassager.showSnackBar(snackBar);
-
-    navigator.pushNamedAndRemoveUntil('/home', (Route<dynamic> route) => false);
+    // Используем switch для обработки ошибок
+    switch (e.code) {
+      case 'user-not-found':
+        SnackBarService.showSnackBar(context, 'Такой email незарегистрирован!', true);
+        break;
+      case 'invalid-email':
+        SnackBarService.showSnackBar(context, 'Некорректный email.', true);
+        break;
+      default:
+        SnackBarService.showSnackBar(context, 'Неизвестная ошибка. Попробуйте позже.', true);
+    }
+    return; // Возвращаемся после обработки ошибки, чтобы не продолжать выполнение метода
   }
+
+  // Если сброс пароля прошел успешно, показываем сообщение об успехе
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text('Сброс пароля осуществлен. Проверьте почту'),
+      backgroundColor: Colors.green,
+    ),
+  );
+
+  // Перенаправляем пользователя на экран home
+  navigator.go('/home');
+}
+
 
   @override
   Widget build(BuildContext context) {

@@ -2,6 +2,7 @@ import 'package:email_validator/email_validator.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:helpnear_app/core/utils/snack_bar.dart';
+import 'package:go_router/go_router.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -31,8 +32,6 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> login() async {
-    final navigator = Navigator.of(context);
-
     final isValid = formKey.currentState!.validate();
     if (!isValid) return;
 
@@ -41,27 +40,24 @@ class _LoginScreenState extends State<LoginScreen> {
         email: emailTextInputController.text.trim(),
         password: passwordTextInputController.text.trim(),
       );
+    GoRouter.of(context).goNamed('home');
     } on FirebaseAuthException catch (e) {
-      print(e.code);
-
-      if (e.code == 'user-not-found' || e.code == 'wrong-password') {
+      print('Error Code: ${e.code}');
+      // Обработка новой универсальной ошибки
+      if (e.code == 'invalid-credential') {
         SnackBarService.showSnackBar(
           context,
-          'Неправильный email или пароль. Повторите попытку',
+          'Неверные учетные данные. Повторите попытку.',
           true,
         );
-        return;
       } else {
         SnackBarService.showSnackBar(
           context,
           'Неизвестная ошибка! Попробуйте еще раз или обратитесь в поддержку.',
           true,
         );
-        return;
       }
     }
-
-    navigator.pushNamedAndRemoveUntil('/home', (Route<dynamic> route) => false);
   }
 
   @override
@@ -120,7 +116,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 30),
               TextButton(
-                onPressed: () => Navigator.of(context).pushNamed('/signup'),
+                onPressed: () => context.go('/signup'),
                 child: const Text(
                   'Регистрация',
                   style: TextStyle(
@@ -130,7 +126,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               TextButton(
                 onPressed: () =>
-                    Navigator.of(context).pushNamed('/reset_password'),
+                    context.go('/reset_password'),
                 child: const Text('Сбросить пароль'),
               ),
             ],

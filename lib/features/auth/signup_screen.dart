@@ -2,6 +2,7 @@ import 'package:email_validator/email_validator.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:helpnear_app/core/utils/snack_bar.dart';
+import 'package:go_router/go_router.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -34,7 +35,6 @@ class _SignUpScreen extends State<SignUpScreen> {
   }
 
   Future<void> signUp() async {
-    final navigator = Navigator.of(context);
 
     final isValid = formKey.currentState!.validate();
     if (!isValid) return;
@@ -72,8 +72,7 @@ class _SignUpScreen extends State<SignUpScreen> {
         );
       }
     }
-
-    navigator.pushNamedAndRemoveUntil('/', (Route<dynamic> route) => false);
+    context.go('/');
   }
 
   @override
@@ -155,7 +154,7 @@ class _SignUpScreen extends State<SignUpScreen> {
               ),
               const SizedBox(height: 30),
               TextButton(
-                onPressed: () => Navigator.of(context).pop(),
+                onPressed: () => context.pop(),
                 child: const Text(
                   'Войти',
                   style: TextStyle(
