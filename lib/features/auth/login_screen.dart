@@ -40,7 +40,7 @@ class _LoginScreenState extends State<LoginScreen> {
         email: emailTextInputController.text.trim(),
         password: passwordTextInputController.text.trim(),
       );
-    GoRouter.of(context).goNamed('home');
+    GoRouter.of(context).goNamed('map');
     } on FirebaseAuthException catch (e) {
       print('Error Code: ${e.code}');
       // Обработка новой универсальной ошибки

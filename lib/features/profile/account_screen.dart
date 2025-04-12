@@ -18,7 +18,7 @@ class _AccountScreenState extends State<AccountScreen> {
 
     await FirebaseAuth.instance.signOut();
 
-    router.goNamed('home');
+    router.goNamed('signup');
   }
 
   @override
@@ -26,18 +26,6 @@ class _AccountScreenState extends State<AccountScreen> {
     return Scaffold(
       resizeToAvoidBottomInset: false,
       appBar: AppBar(
-        leading: IconButton(
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              GoRouter.of(context).goNamed('home');
-            }
-          },
-          icon: const Icon(
-            Icons.arrow_back_ios, // add custom icons also
-          ),
-        ),
         title: const Text('Аккаунт'),
         actions: [
           IconButton(
