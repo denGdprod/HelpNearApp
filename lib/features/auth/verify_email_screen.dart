@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:helpnear_app/core/utils/snack_bar.dart';
+import 'package:provider/provider.dart';
+import 'package:helpnear_app/core/utils/auth_state_notifier.dart';
 
 class VerifyEmailScreen extends StatefulWidget {
   const VerifyEmailScreen({super.key});
@@ -19,8 +21,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   @override
   void initState() {
     super.initState();
-
-    isEmailVerified = FirebaseAuth.instance.currentUser!.emailVerified;
+    isEmailVerified = FirebaseAuth.instance.currentUser?.emailVerified ?? false;
 
     if (!isEmailVerified) {
       sendVerificationEmail();
@@ -39,19 +40,33 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   }
 
   Future<void> checkEmailVerified() async {
-    await FirebaseAuth.instance.currentUser!.reload();
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      await user?.reload();
+      final refreshedUser = FirebaseAuth.instance.currentUser;
 
-    final verified = FirebaseAuth.instance.currentUser!.emailVerified;
+      isEmailVerified = refreshedUser?.emailVerified ?? false;
 
-    if (verified) {
-      timer?.cancel();
-      if (mounted) {
-        context.go('/home');
+      if (isEmailVerified) {
+        timer?.cancel();
+        if (!mounted) return;
+        final auth = context.read<AuthStateNotifier>();
+        await auth.refreshUser();
+        if (mounted) context.go('/email_verified');
       }
-    } else {
-      setState(() {
-        isEmailVerified = false;
-      });
+    } catch (e) {
+      timer?.cancel();
+      if (e is FirebaseAuthException && e.code == 'user-not-found') {
+        if (mounted) context.go('/login');
+      } else {
+        if (mounted) {
+          SnackBarService.showSnackBar(
+            context,
+            'Ошибка: $e',
+            true,
+          );
+        }
+      }
     }
   }
 
@@ -62,21 +77,19 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
 
       setState(() => canResendEmail = false);
       await Future.delayed(const Duration(seconds: 5));
-
       setState(() => canResendEmail = true);
     } catch (e) {
       if (mounted) {
         SnackBarService.showSnackBar(
           context,
-          '$e',
-          //'Неизвестная ошибка! Попробуйте еще раз или обратитесь в поддержку.',
+          'Ошибка отправки: $e',
           true,
         );
       }
     }
   }
 
-@override
+  @override
   Widget build(BuildContext context) => Scaffold(
         resizeToAvoidBottomInset: false,
         appBar: AppBar(
@@ -90,9 +103,8 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
               children: [
                 const Text(
                   'Письмо с подтверждением было отправлено на вашу электронную почту.',
-                  style: TextStyle(
-                    fontSize: 20,
-                  ),
+                  style: TextStyle(fontSize: 20),
+                  textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton.icon(
@@ -104,16 +116,14 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                 TextButton(
                   onPressed: () async {
                     timer?.cancel();
-                    await FirebaseAuth.instance.currentUser!.delete();
+                    await FirebaseAuth.instance.currentUser?.delete();
                     if (mounted) {
                       context.go('/login');
                     }
                   },
                   child: const Text(
                     'Отменить',
-                    style: TextStyle(
-                      color: Colors.blue,
-                    ),
+                    style: TextStyle(color: Colors.blue),
                   ),
                 )
               ],

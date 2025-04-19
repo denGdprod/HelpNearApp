@@ -21,25 +21,27 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    
-    final auth = Provider.of<AuthStateNotifier>(context);
-    // Показываем заглушку, пока Firebase Auth загружается
-    if (auth.isLoading) {
-      return const MaterialApp(
-        debugShowCheckedModeBanner: false,
-        home: SplashScreen(),
-        );
-    }
-    final router = createRouter(auth);
+    return Consumer<AuthStateNotifier>(
+      builder: (context, auth, _) {
+        if (auth.isLoading) {
+          return const MaterialApp(
+            debugShowCheckedModeBanner: false,
+            home: SplashScreen(),
+          );
+        }
 
-    return MaterialApp.router(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        pageTransitionsTheme: const PageTransitionsTheme(builders: {
-          TargetPlatform.android: CupertinoPageTransitionsBuilder(),
-        }),
-      ),
-      routerConfig: router,
+        final router = createRouter(auth);
+
+        return MaterialApp.router(
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData(
+            pageTransitionsTheme: const PageTransitionsTheme(builders: {
+              TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+            }),
+          ),
+          routerConfig: router,
+        );
+      },
     );
   }
 }

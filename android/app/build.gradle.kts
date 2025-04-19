@@ -10,7 +10,7 @@ plugins {
 
 android {
     namespace = "com.example.helpnear_app"
-    compileSdk = 34
+    compileSdk = 35
 
     ndkVersion = "27.0.12077973"
 
@@ -26,7 +26,7 @@ android {
     defaultConfig {
         applicationId = "com.example.helpnear_app"
         minSdk = 23
-        targetSdk = 34
+        targetSdk = 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }

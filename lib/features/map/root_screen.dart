@@ -8,12 +8,8 @@ class RootScreen extends StatelessWidget {
   
   List<BottomNavigationBarItem> get _buildBottomNavBarItems => [
         const BottomNavigationBarItem(
-          icon: Icon(Icons.note),
-          label: 'Заметки',
-        ),
-        const BottomNavigationBarItem(
-          icon: Icon(Icons.favorite),
-          label: 'Любимые',
+          icon: Icon(Icons.map),
+          label: 'Карта',
         ),
         const BottomNavigationBarItem(
           icon: Icon(Icons.person),
@@ -24,20 +20,6 @@ class RootScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Главная страница'),
-        actions: [
-          IconButton(
-            onPressed: () {
-              // context.go('/settings');
-            },
-            icon: const Icon(
-              Icons.settings_input_antenna,
-              color: Color.fromARGB(255, 91, 144, 243),
-            ),
-          ),
-        ],
-      ),
       body: navigationShell,
       bottomNavigationBar: BottomNavigationBar(
         items: _buildBottomNavBarItems,

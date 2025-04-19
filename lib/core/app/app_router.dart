@@ -9,7 +9,9 @@ import 'package:helpnear_app/features/errors/error_screen.dart';
 import 'package:helpnear_app/features/auth/unauthenticated_screen.dart';
 import 'package:helpnear_app/core/utils/auth_state_notifier.dart';
 import 'package:helpnear_app/features/map/map_screen.dart';
-import 'package:helpnear_app/features/map/widgets/sos_dialog.dart';
+import 'package:helpnear_app/features/profile/create_profile/create_profile_screen.dart';
+import 'package:helpnear_app/features/auth/email_verified.dart';
+//import 'package:helpnear_app/features/map/widgets/sos_dialog.dart';
 
 GoRouter createRouter(AuthStateNotifier auth) {
   return GoRouter(
@@ -27,15 +29,6 @@ GoRouter createRouter(AuthStateNotifier auth) {
                 path: '/map',
                 name: 'map',
                 builder: (context, state) => const MapScreen(),
-              ),
-            ],
-          ),
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: '/sos_dialog',
-                name: 'sos_dialog',
-                builder: (context, state) => const Placeholder(),
               ),
             ],
           ),
@@ -71,41 +64,66 @@ GoRouter createRouter(AuthStateNotifier auth) {
         builder: (context, state) => const VerifyEmailScreen(),
       ),
       GoRoute(
+        path: '/email_verified',
+        name: '/email_verified',
+        builder: (context, state) => const EmailVerifiedScreen(),
+      ),
+      GoRoute(
         path: '/unauthenticated',
         name: 'unauthenticated',
         builder: (context, state) => const UnauthenticatedScreen(),
       ),
+      GoRoute(
+        path: '/create_profile',
+        name: 'create_profile',
+        builder: (context, state) => CreateProfileScreen(),
+      ),
     ],
-    redirect: (context, state) {
-      if (auth.isLoading) return null;
-
+   redirect: (context, state) async {
+    if (auth.isLoading) return null;
+    try {
       final isAuth = auth.isAuthenticated;
       final isEmailVerified = auth.isEmailVerified;
-      final currentLocation = state.uri.toString();
-      final authRoutes = [
+      final isProfileCreated = await auth.isProfileCreated;
+      final currentLocation = state.uri.path;
+
+      final isAuthRoute = [
         '/login',
         '/signup',
         '/reset_password',
         '/verify_email',
         '/unauthenticated',
-      ];
+        '/email_verified',
+      ].contains(currentLocation);
 
-      final isInAuthFlow =
-          authRoutes.any((route) => currentLocation.startsWith(route));
-
-      if (!isAuth && !isInAuthFlow) {
-        return '/unauthenticated';
+      // Если пользователь не аутентифицирован
+      if (!isAuth) {
+        return isAuthRoute ? null : '/unauthenticated';
       }
 
-      if (isAuth && !isEmailVerified && currentLocation != '/verify_email') {
-        return '/verify_email';
-      }
+      // Если пользователь аутентифицирован
+      if (isAuth) {
+        // Если email не подтверждён
+        if (!isEmailVerified) {
+          return currentLocation == '/verify_email' ? null : '/verify_email';
+        }
 
-      if (isAuth && isInAuthFlow) {
-        return '/map';
+        // Если профиль не создан
+        if (!isProfileCreated) {
+          return currentLocation == '/create_profile' ? null : '/create_profile';
+        }
+
+        // Если всё в порядке, но пользователь на auth-странице
+        if (isAuthRoute) {
+          return '/map';
+        }
       }
 
       return null;
-    },
+    } catch (e) {
+      // Если произошла ошибка (например, пользователь удалён)
+      return '/unauthenticated';
+    }
+  },
   );
 }
