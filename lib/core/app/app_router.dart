@@ -1,6 +1,5 @@
 import 'package:go_router/go_router.dart';
 import 'package:helpnear_app/features/map/root_screen.dart';
-import 'package:helpnear_app/features/profile/account_screen.dart';
 import 'package:helpnear_app/features/auth/login_screen.dart';
 import 'package:helpnear_app/features/auth/signup_screen.dart';
 import 'package:helpnear_app/features/auth/reset_password_screen.dart';
@@ -11,7 +10,8 @@ import 'package:helpnear_app/core/utils/auth_state_notifier.dart';
 import 'package:helpnear_app/features/map/map_screen.dart';
 import 'package:helpnear_app/features/profile/create_profile/create_profile_screen.dart';
 import 'package:helpnear_app/features/auth/email_verified.dart';
-//import 'package:helpnear_app/features/map/widgets/sos_dialog.dart';
+import 'package:helpnear_app/features/profile/profile_screen.dart';
+import 'package:helpnear_app/features/profile/edit_profile/edit_profile_screen.dart';
 
 GoRouter createRouter(AuthStateNotifier auth) {
   return GoRouter(
@@ -35,9 +35,24 @@ GoRouter createRouter(AuthStateNotifier auth) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/account',
-                name: 'account',
-                builder: (context, state) => const AccountScreen(),
+                path: '/profile',
+                name: 'profile',
+                builder: (context, state) => const ProfileScreen(), // Свой профиль
+                routes: [
+                  GoRoute(
+                    path: 'edit',
+                    name: 'edit_profile',
+                    builder: (context, state) => EditProfileScreen(),
+                  ),
+                  GoRoute(
+                    path: ':userId',
+                    name: 'user_profile',
+                    builder: (context, state) {
+                      final userId = state.pathParameters['userId']!;
+                      return ProfileScreen(userId: userId);
+                    },
+                  ),
+                ],
               ),
             ],
           ),
