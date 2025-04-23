@@ -3,10 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:helpnear_app/core/app/app_router.dart';
 import 'package:helpnear_app/core/utils/auth_state_notifier.dart';
 import 'package:provider/provider.dart';
-import 'package:helpnear_app/features/loading/splash.dart';
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized(); //запуск firebase
+  WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   runApp(
     ChangeNotifierProvider(
@@ -21,27 +20,17 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<AuthStateNotifier>(
-      builder: (context, auth, _) {
-        if (auth.isLoading) {
-          return const MaterialApp(
-            debugShowCheckedModeBanner: false,
-            home: SplashScreen(),
-          );
-        }
+    final auth = Provider.of<AuthStateNotifier>(context);
+    final router = createRouter(auth);
 
-        final router = createRouter(auth);
-
-        return MaterialApp.router(
-          debugShowCheckedModeBanner: false,
-          theme: ThemeData(
-            pageTransitionsTheme: const PageTransitionsTheme(builders: {
-              TargetPlatform.android: CupertinoPageTransitionsBuilder(),
-            }),
-          ),
-          routerConfig: router,
-        );
-      },
+    return MaterialApp.router(
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        pageTransitionsTheme: const PageTransitionsTheme(builders: {
+          TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+        }),
+      ),
+      routerConfig: router,
     );
   }
 }

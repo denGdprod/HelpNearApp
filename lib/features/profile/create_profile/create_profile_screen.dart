@@ -6,6 +6,9 @@ import 'save_profile.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
+import 'package:helpnear_app/core/utils/auth_state_notifier.dart';
+import 'package:provider/provider.dart';
+
 class CreateProfileScreen extends StatefulWidget {
   @override
   _CreateProfileScreenState createState() => _CreateProfileScreenState();
@@ -65,10 +68,10 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
           birthday: _selectedBirthday!,
           photoUrl: photoUrl,
         );
-
-      Future.delayed(Duration(seconds: 1), () {
+        
+        await context.read<AuthStateNotifier>().checkProfileCreated();
         context.goNamed('map');
-      });
+
       } catch (e) {
         print("Ошибка при сохранении профиля: $e");
         ScaffoldMessenger.of(context).showSnackBar(

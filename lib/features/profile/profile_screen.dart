@@ -4,15 +4,20 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   final String? userId; // Если null - текущий пользователь
 
   const ProfileScreen({super.key, this.userId});
 
   @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+  }
+
+  class _ProfileScreenState extends State<ProfileScreen> {
+  @override
   Widget build(BuildContext context) {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
-    final isCurrentUser = userId == null || userId == currentUserId;
+    final isCurrentUser = widget.userId == null || widget.userId == currentUserId;
 
     return Scaffold(
       appBar: AppBar(
@@ -24,12 +29,20 @@ class ProfileScreen extends StatelessWidget {
               onPressed: () => context.goNamed('edit_profile'),
               tooltip: 'Редактировать профиль',
             ),
+            IconButton(
+              icon: const Icon(Icons.logout),
+              onPressed: () async {
+                await FirebaseAuth.instance.signOut();
+                context.go('/login'); // Adjust the route as needed
+              },
+              tooltip: 'Выйти',
+            ),
         ],
       ),
       body: FutureBuilder<DocumentSnapshot>(
         future: FirebaseFirestore.instance
             .collection('users')
-            .doc(userId ?? currentUserId)
+            .doc(widget.userId ?? currentUserId)
             .get(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
