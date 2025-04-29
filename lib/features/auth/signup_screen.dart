@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:helpnear_app/core/utils/snack_bar.dart';
 import 'package:go_router/go_router.dart';
+import 'package:helpnear_app/features/auth/CastomLoadingDialog.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -12,7 +13,8 @@ class SignUpScreen extends StatefulWidget {
 }
 
 class _SignUpScreen extends State<SignUpScreen> {
-  bool isHiddenPassword = true;
+  bool isHiddenPassword1 = true;
+  bool isHiddenPassword2 = true;
   TextEditingController emailTextInputController = TextEditingController();
   TextEditingController passwordTextInputController = TextEditingController();
   TextEditingController passwordTextRepeatInputController =
@@ -28,51 +30,70 @@ class _SignUpScreen extends State<SignUpScreen> {
     super.dispose();
   }
 
-  void togglePasswordView() {
+  void togglePasswordView1() {
     setState(() {
-      isHiddenPassword = !isHiddenPassword;
+      isHiddenPassword1 = !isHiddenPassword1;
     });
   }
-
+  void togglePasswordView2() {
+    setState(() {
+      isHiddenPassword2 = !isHiddenPassword2;
+    });
+  }
+  String? _validatePassword(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Пароль не может быть пустым';
+    }
+    if (value.length < 6) {
+      return 'Пароль должен содержать минимум 6 символов';
+    }
+    if (!value.contains(RegExp(r'[0-9]'))) {
+      return 'Пароль должен содержать хотя бы одну цифру';
+    }
+    if (!value.contains(RegExp(r'[A-Z]'))) {
+      return 'Пароль должен содержать хотя бы одну заглавную букву';
+    }
+    return null;
+  }
   Future<void> signUp() async {
 
-    final isValid = formKey.currentState!.validate();
-    if (!isValid) return;
-
-    if (passwordTextInputController.text !=
-        passwordTextRepeatInputController.text) {
-      SnackBarService.showSnackBar(
-        context,
-        'Пароли должны совпадать',
-        true,
-      );
-      return;
-    }
-
+    if (!formKey.currentState!.validate()) return;
+    showDialog(
+    context: context,
+    barrierDismissible: false, // Чтобы пользователь не мог закрыть диалог
+    builder: (context) => const CustomLoadingDialog(),
+    );
     try {
       await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: emailTextInputController.text.trim(),
         password: passwordTextInputController.text.trim(),
       );
     } on FirebaseAuthException catch (e) {
-      print(e.code);
-
-      if (e.code == 'email-already-in-use') {
-        SnackBarService.showSnackBar(
-          context,
-          'Такой Email уже используется, повторите попытку с использованием другого Email',
-          true,
-        );
-        return;
-      } else {
-        SnackBarService.showSnackBar(
-          context,
-          'Неизвестная ошибка! Попробуйте еще раз или обратитесь в поддержку.',
-          true,
-        );
+      String errorMessage;
+      switch (e.code) {
+        case 'email-already-in-use':
+          errorMessage = 'Этот Email уже используется. Пожалуйста, используйте другой.';
+          break;
+        case 'weak-password':
+          errorMessage = 'Пароль слишком слабый. Используйте более сложный пароль.';
+          break;
+        case 'invalid-email':
+          errorMessage = 'Некорректный Email. Пожалуйста, проверьте введенные данные.';
+          break;
+        default:
+          errorMessage = 'Произошла ошибка: ${e.message ?? "Неизвестная ошибка"}';
       }
-    }
-    context.go('/');
+    SnackBarService.showSnackBar(context, errorMessage, true);
+  } catch (e) {
+    // Обрабатываем все другие ошибки
+    if (mounted) Navigator.pop(context);
+    SnackBarService.showSnackBar(
+      context,
+      'Произошла непредвиденная ошибка. Пожалуйста, попробуйте позже.',
+      true,
+    );
+    debugPrint('Ошибка регистрации: $e');
+  }
   }
 
   @override
@@ -105,18 +126,16 @@ class _SignUpScreen extends State<SignUpScreen> {
               TextFormField(
                 autocorrect: false,
                 controller: passwordTextInputController,
-                obscureText: isHiddenPassword,
+                obscureText: isHiddenPassword1,
                 autovalidateMode: AutovalidateMode.onUserInteraction,
-                validator: (value) => value != null && value.length < 6
-                    ? 'Минимум 6 символов'
-                    : null,
+                validator: _validatePassword,
                 decoration: InputDecoration(
                   border: const OutlineInputBorder(),
                   hintText: 'Введите пароль',
                   suffix: InkWell(
-                    onTap: togglePasswordView,
+                    onTap: togglePasswordView1,
                     child: Icon(
-                      isHiddenPassword
+                      isHiddenPassword1
                           ? Icons.visibility_off
                           : Icons.visibility,
                       color: Colors.black,
@@ -128,18 +147,21 @@ class _SignUpScreen extends State<SignUpScreen> {
               TextFormField(
                 autocorrect: false,
                 controller: passwordTextRepeatInputController,
-                obscureText: isHiddenPassword,
+                obscureText: isHiddenPassword2,
                 autovalidateMode: AutovalidateMode.onUserInteraction,
-                validator: (value) => value != null && value.length < 6
-                    ? 'Минимум 6 символов'
-                    : null,
+                validator: (value) {
+                  if (value != passwordTextInputController.text) {
+                    return 'Пароли не совпадают';
+                    }
+                  return _validatePassword(value); // Проверяем валидность + совпадение`
+                },
                 decoration: InputDecoration(
                   border: const OutlineInputBorder(),
                   hintText: 'Введите пароль еще раз',
                   suffix: InkWell(
-                    onTap: togglePasswordView,
+                    onTap: togglePasswordView2,
                     child: Icon(
-                      isHiddenPassword
+                      isHiddenPassword2
                           ? Icons.visibility_off
                           : Icons.visibility,
                       color: Colors.black,

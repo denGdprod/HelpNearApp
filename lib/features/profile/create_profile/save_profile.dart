@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:helpnear_app/data/models/user_model.dart';
 
 Future<void> saveUserProfile({
   required String name,
@@ -11,23 +12,25 @@ Future<void> saveUserProfile({
   final user = FirebaseAuth.instance.currentUser;
 
   if (user != null) {
+    final userProfile = UserProfile(
+      name: name,
+      surname: surname,
+      phone: '79$phone',
+      email: user.email,
+      birthday: birthday,
+      photoUrl: photoUrl,
+    );
+
     try {
-      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-        'name': name,
-        'surname': surname,
-        'phone': '79$phone',
-        'email_adress': user.email,
-        'birthday': birthday,
-        'photoUrl': photoUrl,
-        'profileCreated': true,
-        'help_count': 0,
-        'received_help_count': 0,
-        'role': 'user',
-        'created_at': FieldValue.serverTimestamp(),
-      });
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .set(userProfile.toJson());
     } catch (e) {
       print("Ошибка при сохранении профиля: $e");
       throw Exception("Ошибка при сохранении профиля");
     }
+  } else {
+    throw Exception("Пользователь не авторизован");
   }
 }
