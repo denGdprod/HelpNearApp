@@ -46,7 +46,6 @@ class AuthStateNotifier extends ChangeNotifier {
       notifyListeners();
     }
   }
-
   // Обработчик изменений состояния аутентификации
   Future<void> _handleAuthStateChanged(User? user) async {
     debugPrint('🔄 [AuthStateChanged] user: ${user?.uid ?? 'null'}');

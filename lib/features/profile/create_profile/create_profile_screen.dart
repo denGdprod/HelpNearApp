@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'package:permission_handler/permission_handler.dart';
 import 'upload_photo.dart';
 import 'save_profile.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
@@ -8,12 +8,28 @@ import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 import 'package:helpnear_app/core/utils/auth_state_notifier.dart';
 import 'package:provider/provider.dart';
+import 'package:helpnear_app/features/profile/image_cropper_service.dart'; // Импортируем для обрезки
 
 class CreateProfileScreen extends StatefulWidget {
+  const CreateProfileScreen({super.key});
+
   @override
+  // ignore: library_private_types_in_public_api
   _CreateProfileScreenState createState() => _CreateProfileScreenState();
 }
 
+class CircleClipper extends CustomClipper<Path> {
+    @override
+    Path getClip(Size size) {
+      return Path()
+        ..addOval(Rect.fromCircle(center: Offset(size.width / 2, size.height / 2), radius: size.width / 2));
+    }
+
+    @override
+    bool shouldReclip(CustomClipper<Path> oldClipper) {
+      return false;
+    }
+  }
 class _CreateProfileScreenState extends State<CreateProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
@@ -21,6 +37,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
   final _phoneController = TextEditingController();
   final _photoUploader = ProfilePhotoUploader();
   DateTime? _selectedBirthday;
+  final _imageCropperService = ImageCropperService();
   File? _pickedImage;
 
   final _phoneMaskFormatter = MaskTextInputFormatter(
@@ -28,6 +45,34 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
     filter: {"#": RegExp(r'[0-9]')},
     type: MaskAutoCompletionType.lazy,
   );
+
+  Future<void> requestPermissions() async {
+    if (Platform.isAndroid) {
+      final status = await Permission.photos.request(); // Android 13+
+      if (status.isDenied || status.isPermanentlyDenied) {
+        _showPermissionDeniedDialog();
+      }
+    } else if (Platform.isIOS) {
+      final status = await Permission.photos.request();
+      if (status.isDenied || status.isPermanentlyDenied) {
+        _showPermissionDeniedDialog();
+      }
+    }
+  }
+
+  void _showPermissionDeniedDialog() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Разрешите доступ ко всем фото в настройках'),
+        action: SnackBarAction(
+          label: 'Открыть',
+          onPressed: () {
+            openAppSettings();
+          },
+        ),
+      ),
+    );
+  }
 
   Future<void> _pickDate() async {
     final DateTime? date = await showDatePicker(
@@ -44,11 +89,10 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
   }
 
   Future<void> _pickImage() async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? picked = await picker.pickImage(source: ImageSource.gallery);
-    if (picked != null) {
+    final image = await _imageCropperService.pickAndCropImage(context);
+    if (image != null && mounted) {
       setState(() {
-        _pickedImage = File(picked.path);
+        _pickedImage = image;
       });
     }
   }
@@ -64,14 +108,12 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
         await saveUserProfile(
           name: _nameController.text,
           surname: _surnameController.text,
-          phone: _phoneMaskFormatter.getUnmaskedText(), // Чистый номер
+          phone: _phoneMaskFormatter.getUnmaskedText(),
           birthday: _selectedBirthday!,
           photoUrl: photoUrl,
         );
-        
         await context.read<AuthStateNotifier>().checkProfileCreated();
         context.goNamed('map');
-
       } catch (e) {
         print("Ошибка при сохранении профиля: $e");
         ScaffoldMessenger.of(context).showSnackBar(
@@ -84,7 +126,6 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
       );
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -95,35 +136,42 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
           key: _formKey,
           child: ListView(
             children: [
-              GestureDetector(
-                onTap: _pickImage,
-                child: CircleAvatar(
-                  radius: 50,
-                  backgroundImage:
-                      _pickedImage != null ? FileImage(_pickedImage!) : null,
-                  child: _pickedImage == null
-                      ? Icon(Icons.add_a_photo, size: 40)
-                      : null,
+                GestureDetector(
+                  onTap: _pickImage,
+                  child: Container(
+                    width: 200,
+                    height: 200,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.grey.shade100,
+                      border: Border.all(color: Colors.grey.shade400, width: 2),
+                    ),
+                    clipBehavior: Clip.antiAlias, // Важно: обрезает содержимое по кругу
+                    child: _pickedImage != null
+                        ? Image.file(
+                            _pickedImage!,
+                            width: 200,
+                            height: 200,
+                          )
+                        : const Icon(Icons.add_a_photo, size: 60, color: Colors.grey),
+                  ),
                 ),
-              ),
               SizedBox(height: 20),
               TextFormField(
                 controller: _nameController,
                 decoration: InputDecoration(labelText: 'Имя'),
-                validator: (value) =>
-                    value!.isEmpty ? 'Введите имя' : null,
+                validator: (value) => value!.isEmpty ? 'Введите имя' : null,
               ),
               TextFormField(
                 controller: _surnameController,
                 decoration: InputDecoration(labelText: 'Фамилия'),
-                validator: (value) =>
-                    value!.isEmpty ? 'Введите фамилию' : null,
+                validator: (value) => value!.isEmpty ? 'Введите фамилию' : null,
               ),
               TextFormField(
                 controller: _phoneController,
                 decoration: InputDecoration(
                   labelText: 'Телефон',
-                  hintText: '+7 (9__) ___-__-__', 
+                  hintText: '+7 (9__) ___-__-__',
                 ),
                 keyboardType: TextInputType.phone,
                 inputFormatters: [_phoneMaskFormatter],
@@ -139,7 +187,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                 children: [
                   Text(
                     _selectedBirthday != null
-                        ? 'Дата рождения: ${DateFormat('dd.MM.yyyy').format(_selectedBirthday!)}' // Форматируем дату
+                        ? 'Дата рождения: ${DateFormat('dd.MM.yyyy').format(_selectedBirthday!)}'
                         : 'Выберите дату рождения',
                   ),
                   Spacer(),

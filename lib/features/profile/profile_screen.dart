@@ -18,7 +18,6 @@ class ProfileScreen extends StatefulWidget {
   Widget build(BuildContext context) {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
     final isCurrentUser = widget.userId == null || widget.userId == currentUserId;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Профиль'),
@@ -39,11 +38,11 @@ class ProfileScreen extends StatefulWidget {
             ),
         ],
       ),
-      body: FutureBuilder<DocumentSnapshot>(
-        future: FirebaseFirestore.instance
+      body: StreamBuilder<DocumentSnapshot>(
+        stream: FirebaseFirestore.instance
             .collection('users')
             .doc(widget.userId ?? currentUserId)
-            .get(),
+            .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -105,7 +104,7 @@ class _ProfileView extends StatelessWidget {
           _ProfileInfoItem(
             icon: Icons.email,
             title: 'Email',
-            value: userData['email_adress'] as String,
+            value: userData['email_address'] as String,
           ),
           _ProfileInfoItem(
             icon: Icons.cake,
@@ -144,6 +143,14 @@ class _ProfileView extends StatelessWidget {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const Divider(),
+            ElevatedButton.icon(
+              onPressed: () {
+                context.goNamed('medical_data');
+              },
+              icon: const Icon(Icons.medical_information),
+              label: const Text('Медицинские данные'),
+            ),
+            const SizedBox(height: 16),
             _ProfileInfoItem(
               icon: Icons.date_range,
               title: 'Дата регистрации',

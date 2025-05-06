@@ -13,6 +13,7 @@ import 'package:helpnear_app/features/auth/email_verified.dart';
 import 'package:helpnear_app/features/profile/profile_screen.dart';
 import 'package:helpnear_app/features/profile/edit_profile/edit_profile_screen.dart';
 import 'package:helpnear_app/features/loading/splash.dart';
+import 'package:helpnear_app/features/profile/medicaldata_screen.dart';
 import 'package:flutter/foundation.dart';
 
 GoRouter createRouter(AuthStateNotifier auth) {
@@ -51,21 +52,26 @@ GoRouter createRouter(AuthStateNotifier auth) {
                   GoRoute(
                     path: 'edit',
                     name: 'edit_profile',
-                    builder: (context, state) => EditProfileScreen(),
+                    builder: (context, state) => EditProfileScreen(),                
                   ),
                   GoRoute(
-                    path: ':userId',
-                    name: 'user_profile',
-                    builder: (context, state) {
-                      final userId = state.pathParameters['userId']!;
-                      return ProfileScreen(userId: userId);
-                    },
+                    path: 'medical_data',
+                    name: 'medical_data',
+                    builder: (context, state) => const MedicalDataScreen(),
                   ),
                 ],
               ),
             ],
           ),
         ],
+      ),
+      GoRoute(
+        path: '/user/:userId',
+        name: 'user_profile',
+        builder: (context, state) {
+          final userId = state.pathParameters['userId']!;
+          return ProfileScreen(userId: userId);
+        },
       ),
       // Прочие экраны
       GoRoute(
@@ -151,13 +157,11 @@ GoRouter createRouter(AuthStateNotifier auth) {
           debugPrint('✉️ Email not verified, redirecting if needed...');
           return currentLocation == '/verify_email' ? null : '/verify_email';
         }
-
         // Проверка наличия профиля
         if (!isProfileCreated) {
           debugPrint('📋 Profile not created, redirecting if needed...');
           return currentLocation == '/create_profile' ? null : '/create_profile';
         }
-
         // Если пользователь авторизован и находит в аутентификационном маршруте
         if (auth.isAuthenticated && isAuthRoute || currentLocation == '/splash') {
           debugPrint('✅ Auth complete, but on auth route. Redirecting to /map...');
