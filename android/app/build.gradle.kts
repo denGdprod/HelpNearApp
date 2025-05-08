@@ -25,7 +25,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.helpnear_app"
-        minSdk = 23
+        minSdk = 26
         targetSdk = 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -45,4 +45,5 @@ flutter {
 }
 dependencies {
      implementation("androidx.appcompat:appcompat:1.6.1")
+     implementation("com.google.android.gms:play-services-location:21.1.0")
 }
