@@ -20,28 +20,47 @@ class MapScreen extends StatefulWidget {
 
 class _MapScreenState extends State<MapScreen> {
   final mapControllerCompleter = Completer<YandexMapController>();
-
+  final List<MapObject> _mapObjects = [];
+  bool _isMapLoaded = false;
+  
   @override
   void initState() {
     super.initState();
     _initPermission().ignore(); 
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Текущее местоположение'),
-      ),
-      body: YandexMap(
-        onMapCreated: (controller) {
-          if (!mapControllerCompleter.isCompleted) {
-            mapControllerCompleter.complete(controller);
-          }
-        },
-      ),
-    );
-  }
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    appBar: AppBar(
+      title: const Text('Карта'),
+    ),
+    body: Stack(
+      children: [
+        YandexMap(
+          onMapCreated: (controller) {
+            if (!mapControllerCompleter.isCompleted) {
+              mapControllerCompleter.complete(controller);
+            }
+          },
+          mapObjects: _mapObjects,
+        ),
+        Align(
+          alignment: Alignment.center,
+          child: Padding(
+            padding: EdgeInsets.only(bottom: 45), // Adjust based on the image size
+            child: Image.asset(
+              'assets/images/location-pin512px.png',
+              width: 90,
+              height: 90,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
 
   Future<void> _initPermission() async {
     if (!await LocationService().checkPermission()) {
@@ -76,31 +95,32 @@ class _MapScreenState extends State<MapScreen> {
       ),
     );
   }
-  void _showSOSDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Экстренный вызов'),
-        content: const Text('Вы уверены, что хотите отправить сигнал SOS?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Отмена'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Сигнал SOS отправлен!')),
-              );
-            },
-            child: const Text('Отправить', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-  }
 }
+//   void _showSOSDialog(BuildContext context) {
+//     showDialog(
+//       context: context,
+//       builder: (context) => AlertDialog(
+//         title: const Text('Экстренный вызов'),
+//         content: const Text('Вы уверены, что хотите отправить сигнал SOS?'),
+//         actions: [
+//           TextButton(
+//             onPressed: () => Navigator.pop(context),
+//             child: const Text('Отмена'),
+//           ),
+//           TextButton(
+//             onPressed: () {
+//               Navigator.pop(context);
+//               ScaffoldMessenger.of(context).showSnackBar(
+//                 const SnackBar(content: Text('Сигнал SOS отправлен!')),
+//               );
+//             },
+//             child: const Text('Отправить', style: TextStyle(color: Colors.red)),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }
 
   // class _MapScreenState extends State<MapScreen> {
   // @override
@@ -163,4 +183,3 @@ class _MapScreenState extends State<MapScreen> {
   //     ),
   //   );
   // }
-
