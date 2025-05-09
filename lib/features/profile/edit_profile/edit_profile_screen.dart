@@ -6,8 +6,6 @@ import 'package:intl/intl.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:helpnear_app/features/profile/create_profile/upload_photo.dart';
-import 'package:go_router/go_router.dart';
-import 'package:flutter/foundation.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});

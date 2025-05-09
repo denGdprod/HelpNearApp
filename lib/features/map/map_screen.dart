@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:yandex_mapkit/yandex_mapkit.dart';
-import 'package:helpnear_app/core/app/services/LocationService.dart';
-import 'package:helpnear_app/data/models/moscow_location.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:helpnear_app/features/map/widgets/location_marker.dart';
+import 'package:helpnear_app/features/map/widgets/location_marker_aura.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({Key? key}) : super(key: key);
@@ -15,13 +16,70 @@ class MapScreen extends StatefulWidget {
 class _MapScreenState extends State<MapScreen> {
   final mapControllerCompleter = Completer<YandexMapController>();
   final List<MapObject> _mapObjects = [];
+  late PlacemarkMapObject locationMarker;
+
   Point? _currentPosition;
   CameraPosition? _cameraPosition;
+
+  // Объявляем переменную для геолокатора
+  late StreamSubscription<Position> _positionStreamSubscription;
 
   @override
   void initState() {
     super.initState();
     _initPermission().ignore();
+    _startLocationUpdates();
+  }
+
+  @override
+  void dispose() {
+    // Отменяем подписку на обновления местоположения, когда экран закрывается
+    _positionStreamSubscription.cancel();
+    super.dispose();
+  }
+
+  // Метод для инициализации прав на доступ к местоположению
+  Future<void> _initPermission() async {
+    if (!await Permission.location.isGranted) {
+      await Permission.location.request();
+    }
+  }
+
+  // Метод для начала отслеживания местоположения
+  void _startLocationUpdates() {
+    // Используем геолокатор для отслеживания местоположения
+    _positionStreamSubscription = Geolocator.getPositionStream(
+      locationSettings: LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 15, // Местоположение будет обновляться каждые 15 метров
+      ),
+    ).listen((Position position) {
+      _onLocationChanged(position);
+    });
+  }
+
+  // Метод для обновления маркера на карте
+  void _onLocationChanged(Position position) {
+    final point = Point(
+      latitude: position.latitude,
+      longitude: position.longitude,
+    );
+    setState(() {
+      _currentPosition = point;
+      _moveToCurrentLocation(point);
+      _updateLocationMarker(point);
+    });
+  }
+
+  // Метод для перемещения камеры на новое местоположение
+  Future<void> _moveToCurrentLocation(Point point) async {
+    final controller = await mapControllerCompleter.future;
+    await controller.moveCamera(
+      animation: const MapAnimation(type: MapAnimationType.smooth, duration: 1),
+      CameraUpdate.newCameraPosition(
+        CameraPosition(target: point, zoom: 16),
+      ),
+    );
   }
 
   @override
@@ -32,31 +90,31 @@ class _MapScreenState extends State<MapScreen> {
       ),
       body: Stack(
         children: [
-        YandexMap(
-          onMapCreated: (controller) {
-            if (!mapControllerCompleter.isCompleted) {
-              mapControllerCompleter.complete(controller);
-            }
-          },
-          mapObjects: _mapObjects,
-          onCameraPositionChanged: (CameraPosition position, CameraUpdateReason reason, bool finished) {
-            if (!finished) {
-              if (_currentPosition != null) {
-                setState(() {
-                  _currentPosition = null;
-                });
+          YandexMap(
+            onMapCreated: (controller) {
+              if (!mapControllerCompleter.isCompleted) {
+                mapControllerCompleter.complete(controller);
               }
-            } else {
-              _onCameraMoved(position);
-            }
-          },
-        ),
+            },
+            mapObjects: _mapObjects,
+            onCameraPositionChanged: (CameraPosition position, CameraUpdateReason reason, bool finished) {
+              if (!finished) {
+                if (_currentPosition != null) {
+                  setState(() {
+                    _currentPosition = null;
+                  });
+                }
+              } else {
+                _onCameraMoved(position);
+              }
+            },
+          ),
           // Маркер по центру
-        const Align(
-          alignment: Alignment.center,
-          child: Padding(
-            padding: EdgeInsets.only(bottom: 45),
-            child: Icon(Icons.location_on, size: 90, color: Colors.red),
+          const Align(
+            alignment: Alignment.center,
+            child: Padding(
+              padding: EdgeInsets.only(bottom: 70),
+              child: Icon(Icons.location_on, size: 90, color: Colors.red),
             ),
           ),
           // Блок с координатами
@@ -88,12 +146,22 @@ class _MapScreenState extends State<MapScreen> {
                   Text(
                     _currentPosition != null
                         ? 'Широта: ${_currentPosition!.latitude.toStringAsFixed(6)}\n'
-                          'Долгота: ${_currentPosition!.longitude.toStringAsFixed(6)}'
+                        'Долгота: ${_currentPosition!.longitude.toStringAsFixed(6)}'
                         : 'Определение...\n',
                     style: const TextStyle(fontSize: 16),
                   ),
                 ],
               ),
+            ),
+          ),
+          Positioned(
+            bottom: 120,
+            right: 20,
+            child: FloatingActionButton(
+              onPressed: _fetchCurrentLocation,
+              backgroundColor: Colors.white,
+              tooltip: 'Моё местоположение',
+              child: const Icon(Icons.my_location),
             ),
           ),
         ],
@@ -108,40 +176,41 @@ class _MapScreenState extends State<MapScreen> {
     });
   }
 
-  Future<void> _initPermission() async {
-    if (!await Permission.location.isGranted) {
-      await Permission.location.request();
-    }
-    await _fetchCurrentLocation();
-  }
-
   Future<void> _fetchCurrentLocation() async {
-    AppLatLong location;
-    const defLocation = MoscowLocation();
-    try {
-      location = await LocationService().getCurrentLocation();
-    } catch (_) {
-      location = defLocation;
-    }
-    await _moveToCurrentLocation(location);
+    Position position = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+    final point = Point(
+      latitude: position.latitude,
+      longitude: position.longitude,
+    );
+    await _moveToCurrentLocation(point);
   }
 
-  Future<void> _moveToCurrentLocation(AppLatLong appLatLong) async {
-    final controller = await mapControllerCompleter.future;
-    final point = Point(latitude: appLatLong.lat, longitude: appLatLong.long);
-
-    await controller.moveCamera(
-      animation: const MapAnimation(type: MapAnimationType.smooth, duration: 1),
-      CameraUpdate.newCameraPosition(
-        CameraPosition(target: point, zoom: 16),
-      ),
+  void _updateLocationMarker(Point point) {
+    final marker = LocationMarker(
+      markerId: 'current_location',
+      point: point,
+      iconAsset: 'assets/images/current_location_marker.png', // Укажите путь к вашей иконке
     );
-
-    setState(() {
-      _currentPosition = point;
+    final markerAura = LocationMarkerAura(
+      markerId: 'current_location_aura',
+      point: point,
+      iconAsset: 'assets/images/current_location_marker_aura.png', // Укажите путь к вашей иконке
+    );
+    // Создание маркера и его ауры
+    marker.createLocationMarker().then((placemark) {
+    markerAura.createLocationMarkerAura().then((placemarkAura) {
+        setState(() {
+          _mapObjects.clear();
+          _mapObjects.add(placemark);
+          _mapObjects.add(placemarkAura);
+        });
+      });
     });
   }
 }
+
 //   void _showSOSDialog(BuildContext context) {
 //     showDialog(
 //       context: context,

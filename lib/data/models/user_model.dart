@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'medical_data_model.dart';
 
 class UserProfile {
   final String name;

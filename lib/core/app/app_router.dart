@@ -139,11 +139,6 @@ GoRouter createRouter(AuthStateNotifier auth) {
         '/email_verified',
       ].contains(currentLocation);
 
-      final isMain = [
-        '/profile',
-        '/map'
-      ].contains(currentLocation);
-
       // Редирект для незарегистрированных пользователей
       if (!isAuth) {
         debugPrint('🚫 Not authenticated, redirecting if needed...');

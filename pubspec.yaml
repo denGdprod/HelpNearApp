@@ -78,7 +78,8 @@ flutter:
   uses-material-design: true
 
   assets:
-       - assets/images/location-pin512px.png
+       - assets/images/current_location_marker.png
+       - assets/images/current_location_marker_aura.png
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see
