@@ -48,10 +48,10 @@ dependencies:
   uuid: ^4.5.1
   mask_text_input_formatter: ^2.9.0
   intl: ^0.20.2
+  yandex_mapkit: ^4.1.0
   yandex_maps_mapkit_lite:
     version: ^4.15.0-beta
-  envied: ^1.1.1
-  #geoflutterfire: ^3.0.3
+  geolocator: ^9.0.2
 
 dev_dependencies:
   flutter_test:

@@ -1,5 +1,5 @@
 import 'package:go_router/go_router.dart';
-import 'package:helpnear_app/features/map/root_screen.dart';
+import 'package:helpnear_app/features/root_screen.dart';
 import 'package:helpnear_app/features/auth/login_screen.dart';
 import 'package:helpnear_app/features/auth/signup_screen.dart';
 import 'package:helpnear_app/features/auth/reset_password_screen.dart';

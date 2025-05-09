@@ -46,4 +46,5 @@ flutter {
 dependencies {
      implementation("androidx.appcompat:appcompat:1.6.1")
      implementation("com.google.android.gms:play-services-location:21.1.0")
+     implementation("com.yandex.android:maps.mobile:4.3.2-full")
 }
