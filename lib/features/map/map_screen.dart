@@ -5,12 +5,6 @@ import 'package:helpnear_app/core/app/services/LocationService.dart';
 import 'package:helpnear_app/data/models/moscow_location.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-void requestLocationPermission() async {
-  if (await Permission.location.isDenied) {
-    await Permission.location.request();
-  }
-}
-
 class MapScreen extends StatefulWidget {
   const MapScreen({Key? key}) : super(key: key);
 
@@ -21,22 +15,23 @@ class MapScreen extends StatefulWidget {
 class _MapScreenState extends State<MapScreen> {
   final mapControllerCompleter = Completer<YandexMapController>();
   final List<MapObject> _mapObjects = [];
-  bool _isMapLoaded = false;
-  
+  Point? _currentPosition;
+  CameraPosition? _cameraPosition;
+
   @override
   void initState() {
     super.initState();
-    _initPermission().ignore(); 
+    _initPermission().ignore();
   }
 
-@override
-Widget build(BuildContext context) {
-  return Scaffold(
-    appBar: AppBar(
-      title: const Text('Карта'),
-    ),
-    body: Stack(
-      children: [
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Карта'),
+      ),
+      body: Stack(
+        children: [
         YandexMap(
           onMapCreated: (controller) {
             if (!mapControllerCompleter.isCompleted) {
@@ -44,27 +39,78 @@ Widget build(BuildContext context) {
             }
           },
           mapObjects: _mapObjects,
+          onCameraPositionChanged: (CameraPosition position, CameraUpdateReason reason, bool finished) {
+            if (!finished) {
+              if (_currentPosition != null) {
+                setState(() {
+                  _currentPosition = null;
+                });
+              }
+            } else {
+              _onCameraMoved(position);
+            }
+          },
         ),
-        Align(
+          // Маркер по центру
+        const Align(
           alignment: Alignment.center,
           child: Padding(
-            padding: EdgeInsets.only(bottom: 45), // Adjust based on the image size
-            child: Image.asset(
-              'assets/images/location-pin512px.png',
-              width: 90,
-              height: 90,
+            padding: EdgeInsets.only(bottom: 45),
+            child: Icon(Icons.location_on, size: 90, color: Colors.red),
             ),
           ),
-        ),
-      ],
-    ),
-  );
-}
+          // Блок с координатами
+          Positioned(
+            bottom: 20,
+            left: 20,
+            right: 20,
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.9),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Текущие координаты:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    _currentPosition != null
+                        ? 'Широта: ${_currentPosition!.latitude.toStringAsFixed(6)}\n'
+                          'Долгота: ${_currentPosition!.longitude.toStringAsFixed(6)}'
+                        : 'Определение...\n',
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
+  void _onCameraMoved(CameraPosition position) {
+    setState(() {
+      _currentPosition = position.target;
+      _cameraPosition = position;
+    });
+  }
 
   Future<void> _initPermission() async {
-    if (!await LocationService().checkPermission()) {
-      await LocationService().requestPermission();
+    if (!await Permission.location.isGranted) {
+      await Permission.location.request();
     }
     await _fetchCurrentLocation();
   }
@@ -82,18 +128,18 @@ Widget build(BuildContext context) {
 
   Future<void> _moveToCurrentLocation(AppLatLong appLatLong) async {
     final controller = await mapControllerCompleter.future;
+    final point = Point(latitude: appLatLong.lat, longitude: appLatLong.long);
+
     await controller.moveCamera(
-      animation: const MapAnimation(type: MapAnimationType.linear, duration: 1),
+      animation: const MapAnimation(type: MapAnimationType.smooth, duration: 1),
       CameraUpdate.newCameraPosition(
-        CameraPosition(
-          target: Point(
-            latitude: appLatLong.lat,
-            longitude: appLatLong.long,
-          ),
-          zoom: 16,
-        ),
+        CameraPosition(target: point, zoom: 16),
       ),
     );
+
+    setState(() {
+      _currentPosition = point;
+    });
   }
 }
 //   void _showSOSDialog(BuildContext context) {
