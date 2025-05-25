@@ -116,7 +116,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                 TextButton(
                   onPressed: () async {
                     timer?.cancel();
-                    await FirebaseAuth.instance.currentUser?.delete();
+                    //await FirebaseAuth.instance.currentUser?.delete();
                     if (mounted) {
                       context.go('/login');
                     }

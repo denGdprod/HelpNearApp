@@ -12,6 +12,10 @@ class RootScreen extends StatelessWidget {
           label: 'Карта',
         ),
         const BottomNavigationBarItem(
+          icon: Icon(Icons.chat),
+          label: 'Обращения',
+        ),
+        const BottomNavigationBarItem(
           icon: Icon(Icons.person),
           label: 'Профиль',
         ),

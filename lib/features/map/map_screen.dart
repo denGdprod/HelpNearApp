@@ -5,6 +5,8 @@ import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:helpnear_app/features/map/widgets/location_marker.dart';
 import 'package:helpnear_app/features/map/widgets/location_marker_aura.dart';
+import 'package:helpnear_app/features/map/widgets/alert_marker.dart';
+import 'package:go_router/go_router.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({Key? key}) : super(key: key);
@@ -15,8 +17,11 @@ class MapScreen extends StatefulWidget {
 
 class _MapScreenState extends State<MapScreen> {
   final mapControllerCompleter = Completer<YandexMapController>();
+  final List<MapObject> _userLocationMarkers = [];
+  final List<MapObject> _alertMarkers = [];
   final List<MapObject> _mapObjects = [];
   late PlacemarkMapObject locationMarker;
+  Offset _sosButtonOffset = const Offset(20, 760);
 
   Point? _currentPosition;
   CameraPosition? _cameraPosition;
@@ -29,6 +34,7 @@ class _MapScreenState extends State<MapScreen> {
     super.initState();
     _initPermission().ignore();
     _startLocationUpdates();
+    _addDemoMarkers();
   }
 
   @override
@@ -158,10 +164,47 @@ class _MapScreenState extends State<MapScreen> {
             bottom: 120,
             right: 20,
             child: FloatingActionButton(
+              heroTag: 'Location',
               onPressed: _fetchCurrentLocation,
               backgroundColor: Colors.white,
               tooltip: 'Моё местоположение',
               child: const Icon(Icons.my_location),
+            ),
+          ),
+          // SOS-кнопка
+          Positioned(
+            left: _sosButtonOffset.dx,
+            top: _sosButtonOffset.dy,
+            child: GestureDetector(
+              onPanUpdate: (details) {
+                setState(() {
+                  _sosButtonOffset += details.delta;
+                });
+                debugPrint('Переместили SOS кнопку на $_sosButtonOffset');
+              },
+              child: FloatingActionButton.extended(
+                heroTag: 'help_button',
+                onPressed: () {
+                  if (_currentPosition != null) {
+                    context.goNamed(
+                      'sosRequest',
+                      extra: {
+                        'latitude': _currentPosition!.latitude,
+                        'longitude': _currentPosition!.longitude,
+                      },
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Координаты еще не определены')),
+                    );
+                  }
+                },
+                backgroundColor: Colors.red,
+                label: const Text('SOS', style: TextStyle(fontSize: 24, color: Colors.white)),
+                icon: const Icon(Icons.emergency, color: Colors.white, size: 28),
+                elevation: 6,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
             ),
           ),
         ],
@@ -202,99 +245,42 @@ class _MapScreenState extends State<MapScreen> {
     marker.createLocationMarker().then((placemark) {
     markerAura.createLocationMarkerAura().then((placemarkAura) {
         setState(() {
-          _mapObjects.clear();
-          _mapObjects.add(placemark);
-          _mapObjects.add(placemarkAura);
-        });
+        _userLocationMarkers.clear();
+        _userLocationMarkers.add(placemark);
+        _userLocationMarkers.add(placemarkAura);
+
+        _mapObjects
+          ..clear()
+          ..addAll(_userLocationMarkers)
+          ..addAll(_alertMarkers);
+        }
+        );
       });
     });
   }
+  void _addDemoMarkers() async {
+    final alert1 = AlertMarker(
+      markerId: 'alert_1',
+      point: Point(latitude: 59.9386, longitude: 30.3141),
+      iconAsset: 'assets/images/alert_red.png',
+    );
+    final alert2 = AlertMarker(
+      markerId: 'alert_2',
+      point: Point(latitude: 55.7558, longitude: 37.6173),
+      iconAsset: 'assets/images/alert_orange.png',
+    );
+
+    final marker1 = await alert1.createAlertMarker();
+    final marker2 = await alert2.createAlertMarker();
+
+    setState(() {
+    _alertMarkers.clear();
+    _alertMarkers.addAll([marker1, marker2]);
+
+    _mapObjects
+      ..clear()
+      ..addAll(_userLocationMarkers)
+      ..addAll(_alertMarkers);
+    });
+  }
 }
-
-//   void _showSOSDialog(BuildContext context) {
-//     showDialog(
-//       context: context,
-//       builder: (context) => AlertDialog(
-//         title: const Text('Экстренный вызов'),
-//         content: const Text('Вы уверены, что хотите отправить сигнал SOS?'),
-//         actions: [
-//           TextButton(
-//             onPressed: () => Navigator.pop(context),
-//             child: const Text('Отмена'),
-//           ),
-//           TextButton(
-//             onPressed: () {
-//               Navigator.pop(context);
-//               ScaffoldMessenger.of(context).showSnackBar(
-//                 const SnackBar(content: Text('Сигнал SOS отправлен!')),
-//               );
-//             },
-//             child: const Text('Отправить', style: TextStyle(color: Colors.red)),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }
-
-  // class _MapScreenState extends State<MapScreen> {
-  // @override
-  // Widget build(BuildContext context) {
-  //   return Scaffold(
-  //     appBar: AppBar(
-  //       title: const Text('Карта'),
-  //       centerTitle: true,
-  //       actions: [
-  //         IconButton(
-  //           icon: const Icon(Icons.my_location),
-  //           onPressed: () {
-  //             // Заглушка для кнопки "Мое местоположение"
-  //             ScaffoldMessenger.of(context).showSnackBar(
-  //               const SnackBar(content: Text('Определение местоположения...')),
-  //             );
-  //           },
-  //         ),
-  //       ],
-  //     ),
-  //     body: Stack(
-  //       children: [
-  //         // Заглушка карты (можно заменить на реальную карту)
-  //         Container(
-  //           color: Colors.grey[200],
-  //           child: Center(
-  //             child: Column(
-  //               mainAxisAlignment: MainAxisAlignment.center,
-  //               children: [
-  //                 const Icon(Icons.map_outlined, size: 100, color: Colors.blue),
-  //                 const SizedBox(height: 16),
-  //                 Text(
-  //                   'Карта будет здесь',
-  //                   style: Theme.of(context).textTheme.headlineSmall,
-  //                 ),
-  //               ],
-  //             ),
-  //           ),
-  //         ),
-
-  //         // Кнопка SOS (можно переместить в нужное место)
-  //         Positioned(
-  //           bottom: 20,
-  //           right: 20,
-  //           child: FloatingActionButton.large(
-  //             onPressed: () {
-  //               _showSOSDialog(context);
-  //             },
-  //             backgroundColor: Colors.red,
-  //             child: const Column(
-  //               mainAxisSize: MainAxisSize.min,
-  //               children: [
-  //                 Icon(Icons.emergency, color: Colors.white),
-  //                 Text('SOS', style: TextStyle(color: Colors.white)),
-  //               ],
-  //             ),
-  //           ),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }

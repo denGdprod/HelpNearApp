@@ -80,6 +80,9 @@ flutter:
   assets:
        - assets/images/current_location_marker.png
        - assets/images/current_location_marker_aura.png
+       - assets/images/alert_green.png
+       - assets/images/alert_orange.png
+       - assets/images/alert_red.png
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

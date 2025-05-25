@@ -60,7 +60,7 @@ class _SignUpScreen extends State<SignUpScreen> {
     if (!formKey.currentState!.validate()) return;
     showDialog(
     context: context,
-    barrierDismissible: false, // Чтобы пользователь не мог закрыть диалог
+    barrierDismissible: false, 
     builder: (context) => const CustomLoadingDialog(),
     );
     try {

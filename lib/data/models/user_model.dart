@@ -12,7 +12,6 @@ class UserProfile {
   final int receivedHelpCount;
   final String role;
   final Timestamp? createdAt;
-  final String? medicalDataId;
 
   UserProfile({
     required this.name,
@@ -26,7 +25,6 @@ class UserProfile {
     this.receivedHelpCount = 0,
     this.role = 'user',
     this.createdAt,
-    this.medicalDataId,
   });
 
   Map<String, dynamic> toJson() {
@@ -42,7 +40,6 @@ class UserProfile {
       'received_help_count': receivedHelpCount,
       'role': role,
       'created_at': FieldValue.serverTimestamp(),
-      'medical_data_id': medicalDataId,
     };
   }
 
@@ -59,7 +56,6 @@ class UserProfile {
       receivedHelpCount: json['received_help_count'] ?? 0,
       role: json['role'] ?? 'user',
       createdAt: json['created_at'],
-      medicalDataId: json['medical_data_id'],
     );
   }
 }

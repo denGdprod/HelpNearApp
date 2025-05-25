@@ -36,7 +36,12 @@ class ProfileScreen extends StatefulWidget {
               },
               tooltip: 'Выйти',
             ),
-        ],
+             IconButton(
+              icon: const Icon(Icons.redo),
+              onPressed: () => context.goNamed('sosRequest'),
+              tooltip: 'Редактировать профиль',
+            ),
+        ],   
       ),
       body: StreamBuilder<DocumentSnapshot>(
         stream: FirebaseFirestore.instance

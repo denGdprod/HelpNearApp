@@ -1,4 +1,5 @@
 import 'package:go_router/go_router.dart';
+import 'package:flutter/material.dart';
 import 'package:helpnear_app/features/root_screen.dart';
 import 'package:helpnear_app/features/auth/login_screen.dart';
 import 'package:helpnear_app/features/auth/signup_screen.dart';
@@ -14,6 +15,8 @@ import 'package:helpnear_app/features/profile/profile_screen.dart';
 import 'package:helpnear_app/features/profile/edit_profile/edit_profile_screen.dart';
 import 'package:helpnear_app/features/loading/splash.dart';
 import 'package:helpnear_app/features/profile/medicaldata_screen.dart';
+import 'package:helpnear_app/features/requests/create_request_screen.dart';
+import 'package:helpnear_app/features/requests/requests_screen.dart';
 import 'package:flutter/foundation.dart';
 
 GoRouter createRouter(AuthStateNotifier auth) {
@@ -39,6 +42,30 @@ GoRouter createRouter(AuthStateNotifier auth) {
                 path: '/map',
                 name: 'map',
                 builder: (context, state) => const MapScreen(),
+                 routes: [
+                  GoRoute(
+                    name: 'sosRequest',
+                    path: '/sosRequest',
+                    pageBuilder: (context, state) {
+                      final extra = state.extra as Map<String, double>;
+                      return MaterialPage(
+                        child: HelpRequestScreen(
+                          latitude: extra['latitude']!,
+                          longitude: extra['longitude']!,
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/requests',
+                name: 'requests',
+                builder: (context, state) => const UserRequestsScreen(),
               ),
             ],
           ),
@@ -59,6 +86,11 @@ GoRouter createRouter(AuthStateNotifier auth) {
                     name: 'medical_data',
                     builder: (context, state) => const MedicalDataScreen(),
                   ),
+                  // GoRoute(
+                  //   path: '/sosRequest2',
+                  //   name: 'sosRequest2',
+                  //   builder: (context, state) => const HelpRequestScreen(),
+                  // ),
                 ],
               ),
             ],
@@ -96,7 +128,7 @@ GoRouter createRouter(AuthStateNotifier auth) {
       ),
       GoRoute(
         path: '/email_verified',
-        name: '/email_verified',
+        name: 'email_verified',
         builder: (context, state) => const EmailVerifiedScreen(),
       ),
       GoRoute(
